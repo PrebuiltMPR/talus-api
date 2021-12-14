@@ -1,31 +1,21 @@
-from flask import Flask
-from flask import request
-import flask
-from flask import abort
-import requests
-import subprocess
 import shlex
-import urllib.parse
-import pipes
-import dotenv
-dotenv.load_dotenv()
-import os
+import subprocess
 
-app = Flask(__name__)
+import flask
+import requests
+from dotenv import dotenv_values
+from flask import Flask, abort, request
 
 MPR_URL = "https://mpr.hunterwittenborn.com/packages-meta-ext-v1.json.gz"
 MPR_README = "https://raw.githubusercontent.com/PrebuiltMPR/builder/master/README.md"
 README_LIMITER = '| :-----------: | ------------: |'
 
-keys = {
-  'leo': os.getenv("LEO_KEY"),
-  'mpr': os.getenv("MPR_KEY")
-}
+KEYS: dict = dotenv_values(".env")
 
-def get_badge_url(package):
+def get_badge_url(package: str) -> str:
     return 'https://github.com/PrebuiltMPR/builder/actions/workflows/'+package+'.yml/badge.svg'
 
-def is_valid_package(package):
+def is_valid_package(package: str) -> bool:
     resp = requests.get(MPR_URL)
     paklist = resp.json()
     all_packages = [ x["Name"] for x in paklist ]
@@ -35,7 +25,7 @@ def is_valid_package(package):
     else:
         return False
 
-def get_mpr_package_list():
+def get_mpr_package_list() -> list:
     mpr_packages = list()
 
     resp = requests.get(MPR_README)
@@ -50,7 +40,7 @@ def get_mpr_package_list():
 
     return mpr_packages
 
-def is_in_prebuildMPR(package):
+def is_in_prebuildMPR(package: str) -> bool:
     mpr_packages = get_mpr_package_list()
     
     if package in mpr_packages:
@@ -58,42 +48,42 @@ def is_in_prebuildMPR(package):
     else:
         return False
 
-def gen_response(success, message):
+def gen_response(success: bool, message) -> dict:
     return {
             'status': "success" if success else "failed",
             'message': message
         }
 
+app = Flask(__name__)
+
 @app.route("/add/", methods=['GET'])
 def exec_add():
-    command = '/bin/bash /home/talus/addtorepo.sh '
+    command = 'bash addtorepo.sh '
     print("============")
     package = request.args.get('package')
     key = request.args.get('apikey')
-    if key not in keys.values():
+    if key not in KEYS.values():
         abort(401)
     
-    if request.method == 'GET':
-        print('Checking package validity')
-        pack = package.split()[0]
+    print('Checking package validity')
+    pack = package.split()[0]
 
-        if is_valid_package(pack):
-            print('Requested package is valid.')
-        else:
-            print('Requested package is invalid. ABORT')
-            return flask.jsonify( gen_response(False, "Requested package does not exist") )
+    if is_valid_package(pack):
+        print('Requested package is valid.')
+    else:
+        print('Requested package is invalid. ABORT')
+        return flask.jsonify( gen_response(False, "Requested package does not exist") )
 
-        if is_in_prebuildMPR(pack):
-            print('Requested package does already exist')
-            return flask.jsonify( gen_response(False, "Requested package does already exist in PrebuiltMPR") )
+    if is_in_prebuildMPR(pack):
+        print('Requested package does already exist')
+        return flask.jsonify( gen_response(False, "Requested package does already exist in PrebuiltMPR") )
 
-        print('Started executing command')
-        command = shlex.split(command + pack)
-        process = subprocess.Popen(command, stdout = subprocess.PIPE)
-        print("Run successfully")
-        output, err = process.communicate()
-        return flask.jsonify( gen_response(True, 'Added package ' + package) )
-    return "not executed"
+    print('Started executing command')
+    command = shlex.split(command + pack)
+    process = subprocess.Popen(command, stdout=subprocess.PIPE)
+    output, err = process.communicate()
+    print("Run successfully")
+    return flask.jsonify( gen_response(True, 'Added package ' + package) )
 
 @app.route("/list/", methods=["GET"])
 def exec_list():
