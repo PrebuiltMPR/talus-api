@@ -17,4 +17,4 @@ RUN git clone https://github.com/PrebuiltMPR/builder.git
 
 EXPOSE 8080
 
-CMD gunicorn --reload --bind 127.0.0.1:8080 wsgi:app
+CMD gunicorn --reload --bind 0.0.0.0:8080 wsgi:app
