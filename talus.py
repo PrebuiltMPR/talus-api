@@ -60,7 +60,7 @@ app = fastapi.FastAPI()
 security = HTTPBasic()
 
 def check_key(credentials: HTTPBasicCredentials = fastapi.Depends(security)):
-    if not (credentials.username in KEYS.keys() and compare_digest(credentials.password, KEYS[credentials.username])):
+    if not (credentials.username in KEYS.keys() and secrets.compare_digest(credentials.password, KEYS[credentials.username])):
         raise fastapi.HTTPException( 
             status_code=fastapi.status.HTTP_401_UNAUTHORIZED, 
             detail="Incorrect email or password",
