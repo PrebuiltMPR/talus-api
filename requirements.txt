@@ -2,3 +2,6 @@ flask
 gunicorn
 requests
 python-dotenv
+wheel
+fastapi
+uvicorn[standard]
