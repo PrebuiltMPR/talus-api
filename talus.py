@@ -101,9 +101,9 @@ def exec_list():
 @app.get("/badge/package")
 def exec_badge(package: str):
     if is_in_prebuildMPR(package):
-        return flask.jsonify( gen_response(True, get_badge_url(package)) )
+        return gen_response(True, get_badge_url(package))
     else:
-        return flask.jsonify( gen_response(False, "Requested badge does not exist") )
+        return gen_response(False, "Requested badge does not exist")
 
 if __name__ == "__main__":
     app.run(debug=False, host='0.0.0.0')
