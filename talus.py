@@ -4,7 +4,7 @@ import secrets
 
 import requests
 from dotenv import dotenv_values
-from fastapi import *
+import fastapi
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from typing import Optional
 
@@ -56,10 +56,10 @@ def gen_response(success: bool, message) -> dict:
             'message': message
         }
 
-app = FastAPI()
+app = fastapi.FastAPI()
 security = HTTPBasic()
 
-def check_key(credentials: HTTPBasicCredentials = Depends(security)):
+def check_key(credentials: HTTPBasicCredentials = fastapi.Depends(security)):
     if not (credentials.username in keys.keys() and compare_digest(credentials.password, keys[credentials.username])):
         raise HTTPException( 
             status_code=status.HTTP_401_UNAUTHORIZED, 
@@ -69,7 +69,7 @@ def check_key(credentials: HTTPBasicCredentials = Depends(security)):
     return credentials.username
 
 @app.put("/add/{package}")
-def exec_add(package: str, username: str = Depends(check_key)):
+def exec_add(package: str, username: str = fastapi.Depends(check_key)):
     command = 'bash addtorepo.sh '
     print("============")
     print('Checking package validity')
